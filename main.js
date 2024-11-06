@@ -11,23 +11,44 @@ camera.position.z = 50;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Create a sphere with a darker blue material
+// Create the first sphere
 const geometry = new THREE.SphereGeometry(10, 32, 32);
 const material = new THREE.MeshBasicMaterial({ color: 0x4682B4 });
-const sphere = new THREE.Mesh(geometry, material);
-scene.add(sphere);
+const sphere1 = new THREE.Mesh(geometry, material);
+scene.add(sphere1);
 
-// Add wireframe overlay
-const wireframeGeometry = new THREE.WireframeGeometry(geometry);
-const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
-scene.add(wireframe);
+// Add wireframe overlay for the first sphere
+const wireframeGeometry1 = new THREE.WireframeGeometry(geometry);
+const wireframeMaterial1 = new THREE.LineBasicMaterial({ color: 0xffffff });
+const wireframe1 = new THREE.LineSegments(wireframeGeometry1, wireframeMaterial1);
+scene.add(wireframe1);
+
+// Position the wireframe to match the first sphere
+wireframe1.position.copy(sphere1.position);
+
+// Create the second sphere at a different position to avoid overlap
+const sphere2 = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0xFF6347 })); // Different color
+sphere2.position.set(25, 0, 0); // Offset by 25 units on the x-axis
+scene.add(sphere2);
+
+// Add wireframe overlay for the second sphere
+const wireframeGeometry2 = new THREE.WireframeGeometry(geometry);
+const wireframeMaterial2 = new THREE.LineBasicMaterial({ color: 0xffffff });
+const wireframe2 = new THREE.LineSegments(wireframeGeometry2, wireframeMaterial2);
+wireframe2.position.copy(sphere2.position); // Position the wireframe to match the second sphere
+scene.add(wireframe2);
 
 function animate() {
-    sphere.rotation.x += 0.002;
-    sphere.rotation.y += 0.002;
-    wireframe.rotation.x += 0.002;
-    wireframe.rotation.y += 0.002;
+    // Rotate both spheres and their wireframes
+    sphere1.rotation.x += 0.002;
+    sphere1.rotation.y += 0.002;
+    wireframe1.rotation.x += 0.002;
+    wireframe1.rotation.y += 0.002;
+
+    sphere2.rotation.x += 0.002;
+    sphere2.rotation.y += 0.002;
+    wireframe2.rotation.x += 0.002;
+    wireframe2.rotation.y += 0.002;
 
     controls.update();
     renderer.render(scene, camera);
