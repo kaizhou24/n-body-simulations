@@ -1,9 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@latest/build/three.module.js';
 
-export function createSphere(scene, x, y, z) {
+export function createSphere(scene, x, y, z, color) {
     // Create a sphere geometry and material
     const geometry = new THREE.SphereGeometry(10, 32, 32);
-    const material = new THREE.MeshBasicMaterial({ color: 0x4682B4 });
+    const material = new THREE.MeshBasicMaterial({ color: color });
     const sphere = new THREE.Mesh(geometry, material);
     sphere.position.set(x, y, z);
 
