@@ -1,15 +1,27 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@latest/build/three.module.js';
 
-export function createSphere() {
+export function createSphere(scene, x, y, z) {
     // Create a sphere geometry and material
-    const geometry = new THREE.SphereGeometry(15, 32, 16, 0, Math.PI * 2, 0, Math.PI);
+    const geometry = new THREE.SphereGeometry(10, 32, 32);
     const material = new THREE.MeshBasicMaterial({ color: 0x4682B4 });
     const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.set(x, y, z);
 
     // Create wireframe overlay
     const wireframeGeometry = new THREE.WireframeGeometry(geometry);
-    const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 1 });
+    const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
     const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
-
+    wireframe.position.set(x, y, z);
+    
+    scene.add(sphere);
+    scene.add(wireframe);
+    
     return { sphere, wireframe }; // Return both the sphere and wireframe
+}
+
+export function animateSphere(sphere, wireframe) {
+    sphere.rotation.x += 0.002;
+    sphere.rotation.y += 0.002;
+    wireframe.rotation.x += 0.002;
+    wireframe.rotation.y += 0.002;
 }

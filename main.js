@@ -1,6 +1,11 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/+esm';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js/+esm';
 
+import { createSphere, animateSphere } from './sphere.js';
+
+let spheres = [];
+let positions = [[-20, 20, 0], [20, 20, 0], [-20, -20, 0], [20, -20, 0]];
+
 // Set up renderer, scene, and camera
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 const scene = new THREE.Scene();
