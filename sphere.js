@@ -1,27 +1,41 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@latest/build/three.module.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/+esm';
 
-export function createSphere(scene, x, y, z, color) {
-    // Create a sphere geometry and material
-    const geometry = new THREE.SphereGeometry(10, 32, 32);
-    const material = new THREE.MeshBasicMaterial({ color: color });
-    const sphere = new THREE.Mesh(geometry, material);
-    sphere.position.set(x, y, z);
+export class Sphere {
+    constructor(scene, x, y, z, r, hseg, wseg, color) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.r = r;
+        this.hseg = hseg;
+        this.wseg = wseg;
+        this.color = color;
 
-    // Create wireframe overlay
-    const wireframeGeometry = new THREE.WireframeGeometry(geometry);
-    const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-    const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
-    wireframe.position.set(x, y, z);
-    
-    scene.add(sphere);
-    scene.add(wireframe);
-    
-    return { sphere, wireframe }; // Return both the sphere and wireframe
-}
+        this.sphere = null;
+        this.wireframe = null;
 
-export function animateSphere(sphere, wireframe) {
-    sphere.rotation.x += 0.1;
-    sphere.rotation.y += 0.1;
-    wireframe.rotation.x += 0.1;
-    wireframe.rotation.y += 0.1;
+        this.createSphere(scene);
+    }
+
+    createSphere(scene) {
+        const geometry = new THREE.SphereGeometry(this.r,this.hseg, this.wseg);
+        const material = new THREE.MeshBasicMaterial({ color: this.color });
+        this.sphere = new THREE.Mesh(geometry, material);
+        this.sphere.position.set(this.x, this.y, this.z);
+
+        // Create wireframe overlay
+        const wireframeGeometry = new THREE.WireframeGeometry(geometry);
+        const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+        this.wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+        this.wireframe.position.set(this.x, this.y, this.z);
+        
+        scene.add(this.sphere);
+        scene.add(this.wireframe);
+    }
+
+    animateSphere() {
+        this.sphere.rotation.x += 0.1;
+        this.sphere.rotation.y += 0.1;
+        this.wireframe.rotation.x += 0.1;
+        this.wireframe.rotation.y += 0.1;
+    }
 }
