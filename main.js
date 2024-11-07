@@ -19,44 +19,45 @@ camera.position.z = 150;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Create the first sphere
-const geometry = new THREE.SphereGeometry(10, 32, 32);
-const material = new THREE.MeshBasicMaterial({ color: 0x4682B4 });
-const sphere1 = new THREE.Mesh(geometry, material);
-scene.add(sphere1);
+// Create spheres and add them to the scene with initial velocities
+for (let i = 0; i < positions.length; i++) {
+    const { sphere, wireframe } = createSphere(scene, positions[i][0], positions[i][1], positions[i][2], positions[i][3]);
+    // Set initial velocity perpendicular to the line connecting the two spheres
+    const initialVelocity = i === 0 ? new THREE.Vector3(0, initialVelocityMagnitude, 0) : new THREE.Vector3(0, -initialVelocityMagnitude, 0);
+    spheres.push({ sphere, wireframe, velocity: initialVelocity });
+}
 
-// Add wireframe overlay for the first sphere
-const wireframeGeometry1 = new THREE.WireframeGeometry(geometry);
-const wireframeMaterial1 = new THREE.LineBasicMaterial({ color: 0xffffff });
-const wireframe1 = new THREE.LineSegments(wireframeGeometry1, wireframeMaterial1);
-scene.add(wireframe1);
+// Function to calculate gravitational force and update positions
+function updatePositions() {
+    for (let i = 0; i < spheres.length; i++) {
+        for (let j = i + 1; j < spheres.length; j++) {
+            // Calculate distance vector between spheres i and j
+            let distanceVector = new THREE.Vector3().subVectors(spheres[j].sphere.position, spheres[i].sphere.position);
+            let distance = distanceVector.length();
 
-// Position the wireframe to match the first sphere
-wireframe1.position.copy(sphere1.position);
+            // Prevent excessive force when distance is too small
+            if (distance < 1) distance = 1;
 
-// Create the second sphere at a different position to avoid overlap
-const sphere2 = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0xFF6347 })); // Different color
-sphere2.position.set(25, 0, 0); // Offset by 25 units on the x-axis
-scene.add(sphere2);
+            // Calculate force magnitude using Newton's gravity equation
+            let forceMagnitude = (G * masses[i] * masses[j]) / (distance * distance);
+            let force = distanceVector.normalize().multiplyScalar(forceMagnitude);
 
-// Add wireframe overlay for the second sphere
-const wireframeGeometry2 = new THREE.WireframeGeometry(geometry);
-const wireframeMaterial2 = new THREE.LineBasicMaterial({ color: 0xffffff });
-const wireframe2 = new THREE.LineSegments(wireframeGeometry2, wireframeMaterial2);
-wireframe2.position.copy(sphere2.position); // Position the wireframe to match the second sphere
-scene.add(wireframe2);
+            // Update velocities based on force (F = m * a -> a = F / m)
+            spheres[i].velocity.add(force.clone().divideScalar(masses[i]));
+            spheres[j].velocity.sub(force.clone().divideScalar(masses[j]));
+        }
+    }
 
+    // Update positions based on velocities
+    for (let i = 0; i < spheres.length; i++) {
+        spheres[i].sphere.position.add(spheres[i].velocity);
+        spheres[i].wireframe.position.copy(spheres[i].sphere.position); // Move wireframe with the sphere
+    }
+}
+
+// Animation loop
 function animate() {
-    // Rotate both spheres and their wireframes
-    sphere1.rotation.x += 0.002;
-    sphere1.rotation.y += 0.002;
-    wireframe1.rotation.x += 0.002;
-    wireframe1.rotation.y += 0.002;
-
-    sphere2.rotation.x += 0.002;
-    sphere2.rotation.y += 0.002;
-    wireframe2.rotation.x += 0.002;
-    wireframe2.rotation.y += 0.002;
+    updatePositions();
 
     controls.update();
     renderer.render(scene, camera);
