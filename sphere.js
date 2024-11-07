@@ -20,8 +20,8 @@ export function createSphere(scene, x, y, z, color) {
 }
 
 export function animateSphere(sphere, wireframe) {
-    sphere.rotation.x += 0.002;
-    sphere.rotation.y += 0.002;
-    wireframe.rotation.x += 0.002;
-    wireframe.rotation.y += 0.002;
+    sphere.rotation.x += 0.1;
+    sphere.rotation.y += 0.1;
+    wireframe.rotation.x += 0.1;
+    wireframe.rotation.y += 0.1;
 }
