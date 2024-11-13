@@ -5,8 +5,9 @@ import { Sphere } from './sphere.js';
 
 let spheres = [];
 let particles = []
-let positions = [[-50, 0, 0, 0x4682B4], [50, 0, 0, 0xFF4F4B]];
-let masses = [10, 10]; // Masses for each sphere
+let positions = [[-50, 0, 0, 0x4682B4], [50, 0, 0, 0xFF4F4B], [0, 0, 50, 0x4682B4], [50, 25, -100, 0xFF4F4B]];
+let masses = [10, 10, 5, 5]; // Masses for each sphere
+let paths = [];
 const G = 1; // Gravitational constant, scaled for simulation
 const initialVelocityMagnitude = 0.25; // Initial velocity for orbiting
 
@@ -26,23 +27,27 @@ for (let i = 0; i < positions.length; i++) {
     // Set initial velocity perpendicular to the line connecting the two spheres
     const initialVelocity = i === 0 ? new THREE.Vector3(0, initialVelocityMagnitude, 0) : new THREE.Vector3(0, -initialVelocityMagnitude, 0);
     spheres.push({ sphereObj: sphereObj, velocity: initialVelocity });
+    paths.push([]);
 }
 
 function randomParticles(num) {
     for (let i = 0; i < num; i++) {
-        const x = Math.random() * 200 - 50;
-        const y = Math.random() * 200 - 50;
-        const z = Math.random() * 200 - 50;
-        const sphereObj = new Sphere(scene, x, y, z, 0.07, 32, 32, 0xffffff);
+        const size = 1000
+        const x = Math.random() * size - size / 2;
+        const y = Math.random() * size - size / 2;
+        const z = Math.random() * size - size / 2;
+        const sphereObj = new Sphere(scene, x, y, z, 0.07, 8, 8, 0xffffff, true);
         particles.push(sphereObj);
     }
 }
 
-randomParticles(100);
+randomParticles(1000);
 
 // Function to calculate gravitational force and update positions
 function updatePositions() {
+    let prev_positions = [];
     for (let i = 0; i < spheres.length; i++) {
+        prev_positions.push(spheres[i].sphereObj.sphere.position.clone());
         for (let j = i + 1; j < spheres.length; j++) {
             // Calculate distance vector between spheres i and j
             let distanceVector = new THREE.Vector3().subVectors(spheres[j].sphereObj.sphere.position, spheres[i].sphereObj.sphere.position);
@@ -66,14 +71,29 @@ function updatePositions() {
         spheres[i].sphereObj.sphere.position.add(spheres[i].velocity);
         spheres[i].sphereObj.wireframe.position.copy(spheres[i].sphereObj.sphere.position); // Move wireframe with the sphere
     }
+
+    return prev_positions;
 }
 
 // Animation loop
 function animate() {
-    updatePositions();
+    let prev_positions = updatePositions();
 
     for (let i = 0; i < spheres.length; i++) {
-        spheres[i].sphereObj.animateSphere();
+        spheres[i].sphereObj.animateSphere(0.1, 0.1, 0.1, 0.1);
+
+        // Draw path
+        paths[i].push(new THREE.Vector3(prev_positions[i].x, prev_positions[i].y, prev_positions[i].z));
+        console.log(paths[i].length);
+        // remove old points
+        if (paths[i].length > 2) {
+            paths[i].shift();
+        }
+
+        const pathGeometry = new THREE.BufferGeometry().setFromPoints(paths[i]);
+        const pathMaterial = new THREE.LineBasicMaterial({ color: positions[i][3] });
+        const line = new THREE.Line( pathGeometry, pathMaterial );
+        scene.add(line);
     }
 
     controls.update();
