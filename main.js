@@ -8,6 +8,7 @@ let particles = []
 let positions = [[-50, 0, 0, 0x4682B4], [50, 0, 0, 0xFF4F4B], [0, 0, 50, 0x4682B4], [50, 25, -100, 0xFF4F4B]];
 let masses = [10, 10, 5, 5]; // Masses for each sphere
 let paths = [];
+let lines = [];
 const G = 1; // Gravitational constant, scaled for simulation
 const initialVelocityMagnitude = 0.25; // Initial velocity for orbiting
 
@@ -20,6 +21,18 @@ const controls = new OrbitControls(camera, renderer.domElement);
 camera.position.z = 150;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+// Add plane on the z-axis
+const planeGeometry = new THREE.PlaneGeometry(200, 200); // Width and height
+const planeMaterial = new THREE.MeshBasicMaterial({
+    color: 0xf7f7f7, // Grey color
+    side: THREE.DoubleSide,
+    opacity: 0.2, // Semi-transparent
+    transparent: true,
+});
+const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+plane.rotation.x = Math.PI / 2; // Align the plane with the x-y plane
+scene.add(plane);
 
 // Create spheres and add them to the scene with initial velocities
 for (let i = 0; i < positions.length; i++) {
@@ -75,25 +88,48 @@ function updatePositions() {
     return prev_positions;
 }
 
-// Animation loop
 function animate() {
     let prev_positions = updatePositions();
 
     for (let i = 0; i < spheres.length; i++) {
         spheres[i].sphereObj.animateSphere(0.1, 0.1, 0.1, 0.1);
 
-        // Draw path
+        // Add current position to the path
         paths[i].push(new THREE.Vector3(prev_positions[i].x, prev_positions[i].y, prev_positions[i].z));
-        console.log(paths[i].length);
-        // remove old points
-        if (paths[i].length > 2) {
+
+        // Limit path size to 5000 points
+        if (paths[i].length > 5000) {
             paths[i].shift();
         }
 
-        const pathGeometry = new THREE.BufferGeometry().setFromPoints(paths[i]);
-        const pathMaterial = new THREE.LineBasicMaterial({ color: positions[i][3] });
-        const line = new THREE.Line( pathGeometry, pathMaterial );
-        scene.add(line);
+        // Create or update the line
+        if (!lines[i]) {
+            // Initialize the geometry and material for the line
+            const pathGeometry = new THREE.BufferGeometry();
+            const positionsArray = new Float32Array(5000 * 3); // Allocate space for 5000 points (x, y, z)
+            pathGeometry.setAttribute('position', new THREE.BufferAttribute(positionsArray, 3));
+            const pathMaterial = new THREE.LineBasicMaterial({ color: positions[i][3] });
+            const line = new THREE.Line(pathGeometry, pathMaterial);
+            scene.add(line);
+            lines[i] = line;
+        }
+
+        // Update the geometry with the current path points
+        const positionsArray = lines[i].geometry.attributes.position.array;
+        for (let j = 0; j < paths[i].length; j++) {
+            positionsArray[j * 3] = paths[i][j].x;
+            positionsArray[j * 3 + 1] = paths[i][j].y;
+            positionsArray[j * 3 + 2] = paths[i][j].z;
+        }
+
+        // Update the attribute to reflect the new data
+        lines[i].geometry.attributes.position.needsUpdate = true;
+
+        // Set the draw range to match the number of points in the path
+        lines[i].geometry.setDrawRange(0, paths[i].length);
+
+        // Recompute the bounding sphere to ensure visibility
+        lines[i].geometry.computeBoundingSphere();
     }
 
     controls.update();
