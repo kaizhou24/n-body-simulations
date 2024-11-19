@@ -3,13 +3,13 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/+esm';
 import { Sphere } from './sphere.js';
 import { SimulationEnvironment } from './env.js';
 
-// Create simulation environment
+// simulation environment
 let env = new SimulationEnvironment();
 let spheres = [];
 let paths = [];
 let lines = [];
 
-// Gravitational constant and initial velocity
+// constants
 const G = 1;
 const initialVelocityMagnitude = 0.25;
 
@@ -20,18 +20,6 @@ let positions = [
     [100, 50, 50, 0x4682B4],
 ];
 let masses = [10, 10, 5];
-
-// Add plane to the environment
-const planeGeometry = new THREE.PlaneGeometry(200, 200);
-const planeMaterial = new THREE.MeshBasicMaterial({
-    color: 0xf7f7f7,
-    side: THREE.DoubleSide,
-    opacity: 0.2,
-    transparent: true,
-});
-const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-plane.rotation.x = Math.PI / 2; // Align plane with x-y axis
-env.scene.add(plane);
 
 // Create spheres and add to the environment
 for (let i = 0; i < positions.length; i++) {
@@ -73,7 +61,6 @@ function updatePositions() {
     return prev_positions;
 }
 
-// Animate function
 function animate() {
     let prev_positions = updatePositions();
 
@@ -86,6 +73,7 @@ function animate() {
             paths[i].shift();
         }
 
+        // Update line geometry
         if (!lines[i]) {
             const pathGeometry = new THREE.BufferGeometry();
             const positionsArray = new Float32Array(1000 * 3);
@@ -96,6 +84,7 @@ function animate() {
             lines[i] = line;
         }
 
+        // Update line positions
         const positionsArray = lines[i].geometry.attributes.position.array;
         for (let j = 0; j < paths[i].length; j++) {
             positionsArray[j * 3] = paths[i][j].x;

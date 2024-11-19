@@ -12,7 +12,6 @@ export class SimulationEnvironment {
 
         this.bodies = [];
         this.particles = [];
-        this.G = 1; // Gravitational constant (scaled)
         
         this.randomParticles(1000);
     }
@@ -21,9 +20,23 @@ export class SimulationEnvironment {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
 
+        // controls setup
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
+        // initial camera position
         this.camera.position.z = 150;
+
+        // plane
+        const planeGeometry = new THREE.PlaneGeometry(200, 200);
+        const planeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xf7f7f7,
+            side: THREE.DoubleSide,
+            opacity: 0.2,
+            transparent: true,
+        });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = Math.PI / 2;
+        this.scene.add(plane);
     }
 
     randomParticles(num) {
