@@ -1,22 +1,40 @@
-class SimulationEnvironment {
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/+esm';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js/+esm';
+
+import { Sphere } from './sphere.js';
+
+export class SimulationEnvironment {
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer();
-        this.setupRenderer();
-        this.setupCamera();
+        this.setup();
 
         this.bodies = [];
+        this.particles = [];
         this.G = 1; // Gravitational constant (scaled)
+        
+        this.randomParticles(1000);
     }
 
-    setupRenderer() {
+    setup() {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
+
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+
+        this.camera.position.z = 150;
     }
 
-    setupCamera() {
-        this.camera.position.z = 50;
+    randomParticles(num) {
+        for (let i = 0; i < num; i++) {
+            const size = 1000
+            const x = Math.random() * size - size / 2;
+            const y = Math.random() * size - size / 2;
+            const z = Math.random() * size - size / 2;
+            const sphereObj = new Sphere(this.scene, x, y, z, 0.07, 8, 8, 0xffffff, true);
+            this.particles.push(sphereObj);
+        }
     }
 
     addBody(body) {
@@ -44,6 +62,3 @@ class SimulationEnvironment {
         this.renderer.render(this.scene, this.camera);
     }
 }
-
-// Export the SimulationEnvironment class
-export { SimulationEnvironment };
