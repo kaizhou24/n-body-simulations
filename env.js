@@ -6,31 +6,38 @@ import { Sphere } from './sphere.js';
 export class SimulationEnvironment {
     static G = 1;
     static initialVelocityMagnitude = 0.25;
-    static epsilon = 0.1;
 
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer();
-
+    
         this.bodies = [];
         this.particles = [];
         this.spheres = [];
         this.paths = [];
         this.lines = [];
+        this.forceVectors = [];
+        this.netForceVectors = [];
 
+        this.sphereRadius = 10;
+    
         this.positions = [
             [-50, 0, 0, 0x4682B4],
             [50, 0, 0, 0xFF4F4B],
-            [100, 50, 50, 0x4682B4],
+            [100, 50, 50, 0x7FFF00],
         ];
         this.masses = [10, 10, 5];
-
+    
         this.setup();
+
+        this.forces = Array.from({ length: this.positions.length }, () => []);
+        this.netForces = this.spheres.map(() => new THREE.Vector3());
         
         this.randomParticles(1000);
-
+    
         this.running = true;
+        this.showForceVectors = false;
     }
 
     setup() {
@@ -38,7 +45,7 @@ export class SimulationEnvironment {
         document.body.appendChild(this.renderer.domElement);
 
         for (let i = 0; i < this.positions.length; i++) {
-            const sphereObj = new Sphere(this.scene, this.positions[i][0], this.positions[i][1], this.positions[i][2], 10, 32, 32, this.positions[i][3]);
+            const sphereObj = new Sphere(this.scene, this.positions[i][0], this.positions[i][1], this.positions[i][2], this.sphereRadius, 32, 32, this.positions[i][3]);
             const initialVelocity = i === 0 
                 ? new THREE.Vector3(0, SimulationEnvironment.initialVelocityMagnitude, 0) 
                 : new THREE.Vector3(0, -SimulationEnvironment.initialVelocityMagnitude, 0);
@@ -64,6 +71,33 @@ export class SimulationEnvironment {
         const plane = new THREE.Mesh(planeGeometry, planeMaterial);
         plane.rotation.x = Math.PI / 2;
         this.scene.add(plane);
+
+        for (let i = 0; i < this.spheres.length; i++) {
+            for (let j = 0; j < this.spheres.length; j++) {
+                if (!this.forceVectors[i]) {
+                    this.forceVectors[i] = [];
+                }
+                if (!this.forceVectors[j]) {
+                    this.forceVectors[j] = [];
+                }
+
+                if (!this.forceVectors[i][j]) {
+                    const material = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 50 });
+                    const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+                    const line = new THREE.Line(geometry, material);
+                    this.scene.add(line);
+                    this.forceVectors[i][j] = line;
+                }
+            }
+            if (!this.netForceVectors[i]) {
+                const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+                const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+                const line = new THREE.Line(geometry, material);
+                this.scene.add(line);
+                this.netForceVectors[i] = line;
+            }
+        }
+        console.log(this.netForceVectors);
     }
 
     randomParticles(num) {
@@ -77,14 +111,12 @@ export class SimulationEnvironment {
         }
     }
 
-    // addBody(body) {
-    //     this.bodies.push(body);
-    //     this.scene.add(body.mesh);
-    // }
-
     updatePositions() {
         let prev_positions = [];
+        this.forces = Array.from({ length: this.positions.length }, () => []);
+    
         for (let i = 0; i < this.spheres.length; i++) {
+            this.netForces[i] = new THREE.Vector3();
             prev_positions.push(this.spheres[i].sphereObj.sphere.position.clone());
             for (let j = i + 1; j < this.spheres.length; j++) {
                 let distanceVector = new THREE.Vector3().subVectors(
@@ -93,40 +125,51 @@ export class SimulationEnvironment {
                 );
                 let distance = distanceVector.length();
     
-                if (distance < 1) distance = 1; // Avoid excessive force
-                let forceMagnitude = (SimulationEnvironment.G * this.masses[i] * this.masses[j]) / (distance * distance + SimulationEnvironment.epsilon);
+                if (distance < 1) distance = 1;
+                let forceMagnitude = (SimulationEnvironment.G * this.masses[i] * this.masses[j]) / (distance * distance);
                 let force = distanceVector.normalize().multiplyScalar(forceMagnitude);
+
+                this.forces[i].push(force);
+                this.forces[j].push(force.clone().negate());
     
+                // Update velocities
                 this.spheres[i].velocity.add(force.clone().divideScalar(this.masses[i]));
                 this.spheres[j].velocity.sub(force.clone().divideScalar(this.masses[j]));
+    
+                // Add forces to net forces
+                this.netForces[i].add(force);
+                this.netForces[j].sub(force);
             }
         }
-    
+
+        // Update positions
         for (let i = 0; i < this.spheres.length; i++) {
             this.spheres[i].sphereObj.sphere.position.add(this.spheres[i].velocity);
             this.spheres[i].sphereObj.wireframe.position.copy(this.spheres[i].sphereObj.sphere.position);
         }
-    
+
         return prev_positions;
     }
 
-    // updatePhysics(timestep) {
-    //     for (let i = 0; i < this.bodies.length; i++) {
-    //         for (let j = 0; j < this.bodies.length; j++) {
-    //             if (i !== j) {
-    //                 this.bodies[i].applyForce(this.bodies[j], this.G, timestep);
-    //             }
-    //         }
-    //     }
-
-    //     this.bodies.forEach(body => {
-    //         body.updatePosition(timestep);
-    //     });
-    // }
+    updateForceVector(i, j, force, net) {
+        const directionToJ = force.clone().normalize();
+        const startPoint = this.spheres[i].sphereObj.sphere.position.clone().add(directionToJ.clone().multiplyScalar(this.sphereRadius));
+        const endPoint = startPoint.clone().add(force);
+        
+        let line;
+        if (!net) {
+            line = this.forceVectors[i][j];
+        } else {
+            line = this.netForceVectors[i];
+        }
+        line.geometry.setFromPoints([startPoint, endPoint]);
+        line.geometry.computeBoundingSphere();
+        line.visible = this.showForceVectors;
+    }
 
     initializePath(index, color) {
         const pathGeometry = new THREE.BufferGeometry();
-        const positionsArray = new Float32Array(1000 * 3); // Max number of points
+        const positionsArray = new Float32Array(1000 * 3);
         pathGeometry.setAttribute('position', new THREE.BufferAttribute(positionsArray, 3));
         const pathMaterial = new THREE.LineBasicMaterial({ color });
         const line = new THREE.Line(pathGeometry, pathMaterial);
@@ -138,9 +181,7 @@ export class SimulationEnvironment {
     
     animate() {
         if (this.running) {
-            // Update positions only if the simulation is running
             let prev_positions = this.updatePositions();
-    
             for (let i = 0; i < this.spheres.length; i++) {
                 this.spheres[i].sphereObj.animateSphere(0.1, 0.1, 0.1, 0.1);
     
@@ -167,6 +208,31 @@ export class SimulationEnvironment {
                 this.lines[i].geometry.setDrawRange(0, this.paths[i].length);
                 this.lines[i].geometry.computeBoundingSphere();
             }
+        }
+
+        if (this.showForceVectors) {
+            for (let i = 0; i < this.forces.length; i++) {
+                for (let j = 0; j < this.spheres.length - 1; j++) {                    
+                    let force = this.forces[i][j].multiplyScalar(1000);
+                    
+                    this.updateForceVector(i, j, force, false);
+                    this.updateForceVector(j, i, force.clone().negate(), false);
+                }
+            }
+
+            for (let i = 0; i < this.netForces.length; i++) {
+                this.updateForceVector(i, 0, this.netForces[i].multiplyScalar(1000), true);
+            }
+        }
+
+        for (let i = 0; i < this.forces.length; i++) {
+            for (let j = 0; j < this.spheres.length; j++) { 
+                this.forceVectors[i][j].visible = this.showForceVectors;
+            }
+        }
+
+        for (let i = 0; i < this.netForces.length; i++) {
+            this.netForceVectors[i].visible = this.showForceVectors;
         }
     
         this.controls.update();
