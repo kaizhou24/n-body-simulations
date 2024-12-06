@@ -238,6 +238,6 @@ export class SimulationEnvironment {
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
     
-        requestAnimationFrame(() => this.animate());
+        requestAnimationFrame(() => this.animate()); //adsf
     }
 }
