@@ -1,3 +1,4 @@
+/* General styles for fullscreen layout */
 html, body {
     margin: 0;
     padding: 0;
@@ -6,6 +7,7 @@ html, body {
     height: 100%;
 }
 
+/* Start menu styles */
 #start-menu {
     position: absolute;
     top: 0;
@@ -25,4 +27,53 @@ html, body {
     padding: 10px 20px;
     font-size: 20px;
     cursor: pointer;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+#start-button:hover {
+    background-color: #0056b3;
+}
+
+/* Help menu styles */
+#help-menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    width: 250px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+}
+
+#help-menu h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    text-align: center;
+}
+
+#help-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#help-menu ul li {
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#help-menu p {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #cccccc;
+    text-align: center;
 }

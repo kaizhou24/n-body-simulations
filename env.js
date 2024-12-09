@@ -165,7 +165,6 @@ export class SimulationEnvironment {
         if (!net) {
             line = this.forceVectors[i][j];
         } else {
-            // console.log(this.netForceVectors[2]);
             line = this.netForceVectors[i];
         }
         line.geometry.setFromPoints([startPoint, endPoint]);
@@ -221,14 +220,14 @@ export class SimulationEnvironment {
                 for (let j = 0; j < this.spheres.length; j++) {        
                     if (i != j) {
                         if (this.forces[i][j]) {
-                            let force = this.forces[i][j].multiplyScalar(1000);
+                            let force = this.forces[i][j].clone().multiplyScalar(1000);
                             this.updateForceVector(i, j, force, false);
                             this.updateForceVector(j, i, force.clone().negate(), false);
                         }
                     }
                 }
 
-                this.updateForceVector(i, i, this.netForces[i].multiplyScalar(1000), true);
+                this.updateForceVector(i, i, this.netForces[i].clone().multiplyScalar(1000), true);
             }
         }
     
