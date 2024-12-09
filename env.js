@@ -97,7 +97,6 @@ export class SimulationEnvironment {
                 this.netForceVectors[i] = line;
             }
         }
-        console.log(this.netForceVectors);
     }
 
     randomParticles(num) {
@@ -114,9 +113,12 @@ export class SimulationEnvironment {
     updatePositions() {
         let prev_positions = [];
         this.forces = Array.from({ length: this.positions.length }, () => []);
-    
+
         for (let i = 0; i < this.spheres.length; i++) {
             this.netForces[i] = new THREE.Vector3();
+        }
+    
+        for (let i = 0; i < this.spheres.length; i++) {
             prev_positions.push(this.spheres[i].sphereObj.sphere.position.clone());
             for (let j = i + 1; j < this.spheres.length; j++) {
                 let distanceVector = new THREE.Vector3().subVectors(
@@ -129,7 +131,7 @@ export class SimulationEnvironment {
                 let forceMagnitude = (SimulationEnvironment.G * this.masses[i] * this.masses[j]) / (distance * distance);
                 let force = distanceVector.normalize().multiplyScalar(forceMagnitude);
 
-                this.forces[i].push(force);
+                this.forces[i].push(force.clone());
                 this.forces[j].push(force.clone().negate());
     
                 // Update velocities
@@ -137,8 +139,8 @@ export class SimulationEnvironment {
                 this.spheres[j].velocity.sub(force.clone().divideScalar(this.masses[j]));
     
                 // Add forces to net forces
-                this.netForces[i].add(force);
-                this.netForces[j].sub(force);
+                this.netForces[i].add(force.clone());
+                this.netForces[j].sub(force.clone());
             }
         }
 
@@ -152,6 +154,9 @@ export class SimulationEnvironment {
     }
 
     updateForceVector(i, j, force, net) {
+        if (!net && i == j) { 
+            return;
+        }
         const directionToJ = force.clone().normalize();
         const startPoint = this.spheres[i].sphereObj.sphere.position.clone().add(directionToJ.clone().multiplyScalar(this.sphereRadius));
         const endPoint = startPoint.clone().add(force);
@@ -160,6 +165,7 @@ export class SimulationEnvironment {
         if (!net) {
             line = this.forceVectors[i][j];
         } else {
+            // console.log(this.netForceVectors[2]);
             line = this.netForceVectors[i];
         }
         line.geometry.setFromPoints([startPoint, endPoint]);
@@ -212,32 +218,23 @@ export class SimulationEnvironment {
 
         if (this.showForceVectors) {
             for (let i = 0; i < this.forces.length; i++) {
-                for (let j = 0; j < this.spheres.length - 1; j++) {                    
-                    let force = this.forces[i][j].multiplyScalar(1000);
-                    
-                    this.updateForceVector(i, j, force, false);
-                    this.updateForceVector(j, i, force.clone().negate(), false);
+                for (let j = 0; j < this.spheres.length; j++) {        
+                    if (i != j) {
+                        if (this.forces[i][j]) {
+                            let force = this.forces[i][j].multiplyScalar(1000);
+                            this.updateForceVector(i, j, force, false);
+                            this.updateForceVector(j, i, force.clone().negate(), false);
+                        }
+                    }
                 }
-            }
 
-            for (let i = 0; i < this.netForces.length; i++) {
-                this.updateForceVector(i, 0, this.netForces[i].multiplyScalar(1000), true);
+                this.updateForceVector(i, i, this.netForces[i].multiplyScalar(1000), true);
             }
-        }
-
-        for (let i = 0; i < this.forces.length; i++) {
-            for (let j = 0; j < this.spheres.length; j++) { 
-                this.forceVectors[i][j].visible = this.showForceVectors;
-            }
-        }
-
-        for (let i = 0; i < this.netForces.length; i++) {
-            this.netForceVectors[i].visible = this.showForceVectors;
         }
     
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
     
-        requestAnimationFrame(() => this.animate()); //adsf
+        requestAnimationFrame(() => this.animate());
     }
 }

@@ -21,5 +21,9 @@ document.addEventListener('keydown', (event) => {
                 });
             }
         });
+
+        env.netForceVectors.forEach((vector) => {
+            if (vector) vector.visible = env.showForceVectors;
+        });
     }
 });
