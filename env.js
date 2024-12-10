@@ -7,7 +7,7 @@ export class SimulationEnvironment {
     static G = 1;
     static initialVelocityMagnitude = 0.25;
 
-    constructor() {
+    constructor(positions, masses) {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer();
@@ -20,14 +20,8 @@ export class SimulationEnvironment {
         this.forceVectors = [];
         this.netForceVectors = [];
 
-        this.sphereRadius = 10;
-    
-        this.positions = [
-            [-50, 0, 0, 0x4682B4],
-            [50, 0, 0, 0xFF4F4B],
-            [100, 50, 50, 0x7FFF00],
-        ];
-        this.masses = [10, 10, 5];
+        this.positions = positions;
+        this.masses = masses;
     
         this.setup();
 
@@ -45,7 +39,7 @@ export class SimulationEnvironment {
         document.body.appendChild(this.renderer.domElement);
 
         for (let i = 0; i < this.positions.length; i++) {
-            const sphereObj = new Sphere(this.scene, this.positions[i][0], this.positions[i][1], this.positions[i][2], this.sphereRadius, 32, 32, this.positions[i][3]);
+            const sphereObj = new Sphere(this.scene, this.positions[i][0], this.positions[i][1], this.positions[i][2], this.positions[i][4], 32, 32, this.positions[i][3]);
             const initialVelocity = i === 0 
                 ? new THREE.Vector3(0, SimulationEnvironment.initialVelocityMagnitude, 0) 
                 : new THREE.Vector3(0, -SimulationEnvironment.initialVelocityMagnitude, 0);
@@ -158,7 +152,7 @@ export class SimulationEnvironment {
             return;
         }
         const directionToJ = force.clone().normalize();
-        const startPoint = this.spheres[i].sphereObj.sphere.position.clone().add(directionToJ.clone().multiplyScalar(this.sphereRadius));
+        const startPoint = this.spheres[i].sphereObj.sphere.position.clone().add(directionToJ.clone().multiplyScalar(this.positions[i][4]));
         const endPoint = startPoint.clone().add(force);
         
         let line;
