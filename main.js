@@ -15,7 +15,7 @@ function updateObjectInputs() {
 
         objectInputDiv.innerHTML = `
             <label>Object ${i + 1} - </label>
-            <label>X: <input id="x-${i}" type="number" value="${(Math.random() * 150- - 50).toFixed(2)}" /></label>
+            <label>X: <input id="x-${i}" type="number" value="${(Math.random() * 150 - 50).toFixed(2)}" /></label>
             <label>Y: <input id="y-${i}" type="number" value="${(Math.random() * 150 - 50).toFixed(2)}" /></label>
             <label>Z: <input id="z-${i}" type="number" value="${(Math.random() * 150 - 50).toFixed(2)}" /></label>
             <label>Mass: <input id="mass-${i}" type="number" value="10" min="1" max="50" /></label>
